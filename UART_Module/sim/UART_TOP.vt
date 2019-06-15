@@ -1,0 +1,69 @@
+`timescale 1 ps/ 1 ps
+module UART_TOP_vlg_tst();
+
+reg RsRx;
+reg clk;
+reg rst_n;
+reg rx_en;
+reg [7:0] tx_data_in;
+reg tx_en;
+// wires                                               
+wire RsTx;
+wire [7:0]  rx_data_out;
+wire uart_irq;
+
+// assign statements (if any)                          
+UART_TOP i1 (
+// port map - connection between master ports and signals/registers   
+	.RsRx(RsRx),
+	.RsTx(RsTx),
+	.clk(clk),
+	.rst_n(rst_n),
+	.rx_data_out(rx_data_out),
+	.rx_en(rx_en),
+	.tx_data_in(tx_data_in),
+	.tx_en(tx_en),
+	.uart_irq(uart_irq)
+);
+initial                                                
+begin 
+					clk			=	0;
+					rst_n			=	0;					
+					RsRx			=	0;					
+					rx_en			=	0;
+					tx_data_in	=	0;
+					tx_en			=	0;		
+					
+		#100		rst_n		=	1;
+		
+		@(negedge	clk)			
+					tx_data_in	=	8'hff;
+					tx_en			=	1;
+
+		@(negedge	clk)			
+					tx_data_in	=	8'h00;
+					tx_en			=	1;
+					
+		@(negedge	clk)			
+					tx_data_in	=	8'h55;
+					tx_en			=	1;
+					
+					
+		@(negedge	clk)			
+					tx_data_in	=	8'h77;
+					tx_en			=	1;
+					
+		@(negedge	clk)			
+					tx_data_in	=	0;
+					tx_en			=	0;
+		
+		#5000000	$stop;
+					
+		
+                                                 
+end
+                                                  
+always 	#10	clk	=	~clk;
+
+endmodule
+
