@@ -1,0 +1,60 @@
+`timescale 1 ps/ 1 ps
+module Edge_Detect_vlg_tst();
+
+reg clk;
+reg i_de;
+reg i_hs;
+reg i_vs;
+reg rst_n;
+reg th_flag;
+// wires                                               
+wire hs_fall;
+wire hs_rise;
+wire th_fall;
+wire th_rise;
+wire vs_fall;
+wire vs_rise;
+
+// assign statements (if any)                          
+Edge_Detect i1 (
+// port map - connection between master ports and signals/registers   
+	.clk(clk),
+	.hs_fall(hs_fall),
+	.hs_rise(hs_rise),
+	.i_de(i_de),
+	.i_hs(i_hs),
+	.i_vs(i_vs),
+	.rst_n(rst_n),
+	.th_fall(th_fall),
+	.th_flag(th_flag),
+	.th_rise(th_rise),
+	.vs_fall(vs_fall),
+	.vs_rise(vs_rise)
+);
+initial                                                
+begin                                                  
+				clk		=	0	;
+				rst_n	=	0	;
+				i_de	=	0	;
+				
+				i_hs	=	0	;
+				i_vs	=	0	;				
+				th_flag	=	0	;
+		#1000
+				i_hs	=	1	;
+				i_vs	=	1	;				
+				th_flag	=	1	;
+		#1000
+				i_hs	=	0	;
+				i_vs	=	0	;				
+				th_flag	=	0	;
+				
+		#1000	$stop;
+				
+                     
+end 
+                                                   
+always	#10	clk	=	~clk;
+      
+endmodule
+
