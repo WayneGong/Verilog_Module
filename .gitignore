@@ -1,2 +1,13 @@
 
 *.qws
+*.asm.rpt
+*.cdf
+*.done
+*.eda.rpt
+*.fit.rpt
+*.smsg
+*.summary
+*.pin
+*.rpt
+*.sld
+*.jdi

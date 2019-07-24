@@ -13,8 +13,8 @@
 # refer to the applicable agreement for further details.
 
 # Quartus Prime Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
-# File: C:\Users\14551\Desktop\DE1_SOC_HEX\DE1_SOC_HEX.tcl
-# Generated on: Tue Jul 23 22:20:24 2019
+# File: C:\Users\14551\Desktop\new\DE1_SOC_HEX.tcl
+# Generated on: Wed Jul 24 09:09:16 2019
 
 package require ::quartus::project
 
@@ -151,3 +151,4 @@ set_location_assignment PIN_AC9 -to SW[7]
 set_location_assignment PIN_AD10 -to SW[8]
 set_location_assignment PIN_AE12 -to SW[9]
 set_location_assignment PIN_AA14 -to rst_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to rst_n
