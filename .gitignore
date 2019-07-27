@@ -11,3 +11,7 @@
 *.rpt
 *.sld
 *.jdi
+i2c_master/db/ov5640_config_top.(0).cnf.cdb
+*.xml
+*.hdb
+*.cdb
