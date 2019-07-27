@@ -118,13 +118,13 @@ begin
 				next_state <= i2c_addr_2byte ? S_WR_REG_ADDR1 : S_WR_DATA;
 			else
 				next_state <= S_WR_REG_ADDR;
-		S_WR_REG_ADDR1:
+		S_WR_REG_ADDR1:				//写寄存器地址
 			if(done)
 				next_state <= S_WR_DATA;
 			else
 				next_state <= S_WR_REG_ADDR1; 
 		//Write data		
-		S_WR_DATA:
+		S_WR_DATA:					//写数据
 			if(done)
 				next_state <= S_WR_STOP;
 			else
@@ -135,40 +135,40 @@ begin
 			next_state <= S_WAIT;
 		S_WAIT:
 			next_state <= S_IDLE;
-		S_RD_DEV_ADDR0:
+		S_RD_DEV_ADDR0:			//读过程的器件地址
 			if(done && irxack)
 				next_state <= S_WR_ERR_NACK;
 			else if(done)
 				next_state <= S_RD_REG_ADDR;
 			else
 				next_state <= S_RD_DEV_ADDR0;
-		S_RD_REG_ADDR:
+		S_RD_REG_ADDR:		//读过程的寄存器地址
 			if(done)
 				next_state <= i2c_addr_2byte ? S_RD_REG_ADDR1 : S_RD_DEV_ADDR1;
 			else
 				next_state <= S_RD_REG_ADDR;
-		S_RD_REG_ADDR1:
+		S_RD_REG_ADDR1:		//读过程的寄存器地址
 			if(done)
 				next_state <= S_RD_DEV_ADDR1;
 			else
 				next_state <= S_RD_REG_ADDR1;               
-		S_RD_DEV_ADDR1:
+		S_RD_DEV_ADDR1:		//读过程的第二个器件地址
 			if(done)
 				next_state <= S_RD_DATA;
 			else
 				next_state <= S_RD_DEV_ADDR1;   
-		S_RD_DATA:
+		S_RD_DATA:			//读数据
 			if(done)
 				next_state <= S_RD_STOP;
 			else
 				next_state <= S_RD_DATA;
-		S_RD_STOP:
+		S_RD_STOP:			//读过程的停止信号
 			if(done)
 				next_state <= S_RD_ACK;
 			else
 				next_state <= S_RD_STOP;
-		S_WR_STOP:
-			if(done)
+		S_WR_STOP:			//写过程的停止信号
+			if(done)		
 				next_state <= S_WR_ACK;
 			else
 				next_state <= S_WR_STOP;                
@@ -177,6 +177,8 @@ begin
 	endcase
 end
 
+
+//生成错误信号
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
@@ -187,24 +189,29 @@ begin
 		error <= 1'b1;
 end
 
+//生成启动信号
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
 		start <= 1'b0;
 	else if(done)
 		start <= 1'b0;
-	else if(state == S_WR_DEV_ADDR || state == S_RD_DEV_ADDR0 || state == S_RD_DEV_ADDR1)
+	else if(state == S_WR_DEV_ADDR || state == S_RD_DEV_ADDR0 || state == S_RD_DEV_ADDR1)	//设置启动信号，在写器件地址前，要先有启动信号。
 		start <= 1'b1;
 end
+
+//生成停止信号
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
 		stop <= 1'b0;
 	else if(done)
 		stop <= 1'b0;
-	else if(state == S_WR_STOP || state == S_RD_STOP)
+	else if(state == S_WR_STOP || state == S_RD_STOP)		//在读数据和写数据完成后，需要停止信号
 		stop <= 1'b1;
 end
+
+
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
@@ -212,15 +219,20 @@ begin
 	else 
 		ack_in <= 1'b1;
 end
+
+//生成写信号，在写器件地址，寄存器地址，写数据中，写信号有效
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
 		write <= 1'b0;
 	else if(done)
 		write <= 1'b0;
-	else if(state == S_WR_DEV_ADDR || state == S_WR_REG_ADDR || state == S_WR_REG_ADDR1|| state == S_WR_DATA || state == S_RD_DEV_ADDR0 || state == S_RD_DEV_ADDR1 || state == S_RD_REG_ADDR || state == S_RD_REG_ADDR1)
+	else if(	state == S_WR_DEV_ADDR || 	state == S_WR_REG_ADDR || 	state == S_WR_REG_ADDR1||	state == S_WR_DATA 
+			|| 	state == S_RD_DEV_ADDR0 || 	state == S_RD_DEV_ADDR1 || 	state == S_RD_REG_ADDR || 	state == S_RD_REG_ADDR1 )
 		write <= 1'b1;
 end
+
+//生成读信号，仅在读数据中，读信号有效
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
@@ -231,6 +243,7 @@ begin
 		read <= 1'b1;
 end
 
+//读数据赋值
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
@@ -239,21 +252,22 @@ begin
 		i2c_read_data <= rxr;
 end
 
+//写字节数据赋值
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
 		txr <= 8'd0;
 	else 
 		case(state)
-			S_WR_DEV_ADDR,S_RD_DEV_ADDR0:
+			S_WR_DEV_ADDR,S_RD_DEV_ADDR0:				//器件地址+写控制字
 				txr <= {i2c_slave_dev_addr[7:1],1'b0};
-			S_RD_DEV_ADDR1:
+			S_RD_DEV_ADDR1:								//器件地址+读控制字
 				txr <= {i2c_slave_dev_addr[7:1],1'b1};
-			S_WR_REG_ADDR,S_RD_REG_ADDR:
+			S_WR_REG_ADDR,S_RD_REG_ADDR:				//如果为双字节地址，先发送高8位字节地址，在发送低8位地址
 				txr <= (i2c_addr_2byte == 1'b1) ? i2c_slave_reg_addr[15:8] : i2c_slave_reg_addr[7:0];
-			S_WR_REG_ADDR1,S_RD_REG_ADDR1:
+			S_WR_REG_ADDR1,S_RD_REG_ADDR1:				//双字节地址的低8位地址
 				txr <= i2c_slave_reg_addr[7:0];             
-			S_WR_DATA:
+			S_WR_DATA:									//发送写数据
 				txr <= i2c_write_data;
 			default:
 				txr <= 8'hff;
@@ -276,6 +290,7 @@ i2c_master_byte_ctrl byte_controller (
 	.dout     ( rxr          ),
 	.i2c_busy ( i2c_busy     ),
 	.i2c_al   ( i2c_al       ),
+	
 	.scl_i    ( scl_pad_i    ),
 	.scl_o    ( scl_pad_o    ),
 	.scl_oen  ( scl_padoen_o ),

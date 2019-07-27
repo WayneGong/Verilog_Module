@@ -130,8 +130,8 @@ module i2c_master_byte_ctrl (
 	wire       core_ack, core_rxd;
 
 	// signals for shift register
-	reg [7:0] sr; //8bit shift register
-	reg       shift, ld;
+	reg [7:0] sr; 			//8bit shift register
+	reg       shift, ld;	//shift :数据接收移位信号，ld:加载发送数据的标志位
 
 	// signals for state machine
 	wire       go;
@@ -144,25 +144,27 @@ module i2c_master_byte_ctrl (
 
 	// hookup bit_controller
 	i2c_master_bit_ctrl bit_controller (
-		.clk     ( clk      ),
-		.rst     ( rst      ),
-		.nReset  ( nReset   ),
-		.ena     ( ena      ),
-		.clk_cnt ( clk_cnt  ),
-		.cmd     ( core_cmd ),
-		.cmd_ack ( core_ack ),
-		.busy    ( i2c_busy ),
-		.al      ( i2c_al   ),
-		.din     ( core_txd ),
-		.dout    ( core_rxd ),
-		.scl_i   ( scl_i    ),
-		.scl_o   ( scl_o    ),
-		.scl_oen ( scl_oen  ),
-		.sda_i   ( sda_i    ),
-		.sda_o   ( sda_o    ),
-		.sda_oen ( sda_oen  )
+		.clk     ( clk      ),		// system clock
+		.rst     ( rst      ),      // synchronous active high reset
+		.nReset  ( nReset   ),      // asynchronous active low reset
+		.ena     ( ena      ),      // core enable signal
+		.clk_cnt ( clk_cnt  ),      // clock prescale value//
+		.cmd     ( core_cmd ),      // command (from byte controller)
+		.cmd_ack ( core_ack ),      // command complete acknowledge
+		.busy    ( i2c_busy ),      // i2c bus busy
+		.al      ( i2c_al   ),      // i2c bus arbitration lost		仲裁失败
+		.din     ( core_txd ),      //发送的数据位
+		.dout    ( core_rxd ),      //接收的数据位
+		.scl_i   ( scl_i    ),      // i2c clock line input
+		.scl_o   ( scl_o    ),      // i2c clock line output
+		.scl_oen ( scl_oen  ),      // i2c clock line output enable (active low
+		.sda_i   ( sda_i    ),      // i2c data line input
+		.sda_o   ( sda_o    ),      // i2c data line output
+		.sda_oen ( sda_oen  )       // i2c data line output enable (active low)
 	);
 
+
+	
 	// generate go-signal
 	assign go = (read | write | stop) & ~cmd_ack;
 
@@ -188,10 +190,10 @@ module i2c_master_byte_ctrl (
 	    dcnt <= #1 3'h0;
 	  else if (ld)
 	    dcnt <= #1 3'h7;
-	  else if (shift)
+	  else if (shift)				//移位次数计数
 	    dcnt <= #1 dcnt - 3'h1;
 
-	assign cnt_done = ~(|dcnt);
+	assign cnt_done = ~(|dcnt);		//dcnt == 000时，cnt_done=1;
 
 	//
 	// state machine
@@ -231,22 +233,22 @@ module i2c_master_byte_ctrl (
 	        ST_IDLE:
 	          if (go)
 	            begin
-	                if (start)
+	                if (start)			//开始信号
 	                  begin
 	                      c_state  <= #1 ST_START;
 	                      core_cmd <= #1 `I2C_CMD_START;
 	                  end
-	                else if (read)
+	                else if (read)		//读信号
 	                  begin
 	                      c_state  <= #1 ST_READ;
 	                      core_cmd <= #1 `I2C_CMD_READ;
 	                  end
-	                else if (write)
+	                else if (write)		//写信号
 	                  begin
 	                      c_state  <= #1 ST_WRITE;
 	                      core_cmd <= #1 `I2C_CMD_WRITE;
 	                  end
-	                else // stop
+	                else // stop		//停止信号
 	                  begin
 	                      c_state  <= #1 ST_STOP;
 	                      core_cmd <= #1 `I2C_CMD_STOP;
@@ -273,8 +275,8 @@ module i2c_master_byte_ctrl (
 	            end
 
 	        ST_WRITE:
-	          if (core_ack)
-	            if (cnt_done)
+	          if (core_ack)			//应答信号有效
+	            if (cnt_done)			//计数完成
 	              begin
 	                  c_state  <= #1 ST_ACK;
 	                  core_cmd <= #1 `I2C_CMD_READ;
