@@ -14,3 +14,6 @@
 *.xml
 *.hdb
 *.cdb
+db
+incremental_db
+output_files
