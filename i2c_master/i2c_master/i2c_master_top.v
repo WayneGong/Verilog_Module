@@ -95,7 +95,7 @@ end
 always@(*)
 begin
 	case(state)
-		S_IDLE:
+		S_IDLE:				
 			//Waiting for read and write requests
 			if(i2c_write_req)
 				next_state <= S_WR_DEV_ADDR;
@@ -103,7 +103,7 @@ begin
 				next_state <= S_RD_DEV_ADDR0;
 			else
 				next_state <= S_IDLE;
-		//Write I2C device address
+		//Write I2C device address，写器件地址
 		S_WR_DEV_ADDR:
 			if(done && irxack)
 				next_state <= S_WR_ERR_NACK;
@@ -111,10 +111,10 @@ begin
 				next_state <= S_WR_REG_ADDR;
 			else
 				next_state <= S_WR_DEV_ADDR;
-		//Write the address of the I2C register
+		//Write the address of the I2C register，写寄存器地址
 		S_WR_REG_ADDR:
 			if(done)
-				//If it is the 8bit register address, it enters the write data state
+				//If it is the 8bit register address, it enters the write data state，判断是否是双字节地址
 				next_state <= i2c_addr_2byte ? S_WR_REG_ADDR1 : S_WR_DATA;
 			else
 				next_state <= S_WR_REG_ADDR;

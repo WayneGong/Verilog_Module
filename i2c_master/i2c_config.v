@@ -41,27 +41,27 @@ module i2c_config(
 	inout              i2c_scl,
 	inout              i2c_sda
 );
-wire scl_pad_i;
-wire scl_pad_o;
-wire scl_padoen_o;
+wire scl_pad_i;			//时钟输入信号线	
+wire scl_pad_o;			//时钟输出信号线
+wire scl_padoen_o;		//时钟信号输出使能（低有效）
 
-wire sda_pad_i;
-wire sda_pad_o;
-wire sda_padoen_o;
+wire sda_pad_i;			//数据输入信号线	
+wire sda_pad_o;			//数据输出信号线
+wire sda_padoen_o;		//数据信号输出使能（低有效）
 
-assign sda_pad_i = i2c_sda;
-assign i2c_sda = ~sda_padoen_o ? sda_pad_o : 1'bz;
-assign scl_pad_i = i2c_scl;
-assign i2c_scl = ~scl_padoen_o ? scl_pad_o : 1'bz;
+assign sda_pad_i = i2c_sda;								//数据输入信号线总是连接到数据引脚	
+assign i2c_sda = ~sda_padoen_o ? sda_pad_o : 1'bz;		//当输出使能有效时，把输出信号的值赋给引脚，否则当输出使能无效时，引脚保持高阻态，此时引脚有外部信号驱动
+assign scl_pad_i = i2c_scl;								//时钟输入信号线总是连接到时钟引脚	
+assign i2c_scl = ~scl_padoen_o ? scl_pad_o : 1'bz;		//和数据端口原理相同
 
-reg i2c_read_req;
-wire i2c_read_req_ack;
-reg i2c_write_req;
-wire i2c_write_req_ack;
-wire[7:0] i2c_slave_dev_addr;
-wire[15:0] i2c_slave_reg_addr;
-wire[7:0] i2c_write_data;
-wire[7:0] i2c_read_data;
+reg i2c_read_req;					//读数据请求
+wire i2c_read_req_ack;				//读数据应答
+reg i2c_write_req;					//写数据请求
+wire i2c_write_req_ack;				//写数据应答
+wire[7:0] i2c_slave_dev_addr;		//器件ID
+wire[15:0] i2c_slave_reg_addr;		//寄存器地址
+wire[7:0] i2c_write_data;			
+wire[7:0] i2c_read_data;			
 
 wire err;
 reg[2:0] state;
@@ -94,7 +94,7 @@ begin
 				error <= 1'b0;
 				lut_index <= 8'd0;
 			end
-			S_WR_I2C_CHECK:
+			S_WR_I2C_CHECK:			//检查I2C写数据是否完成，要将摄像头的配置数据全部写入
 			begin
 				if(i2c_slave_dev_addr != 8'hff)
 				begin
@@ -103,17 +103,17 @@ begin
 				end
 				else
 				begin
-					state <= S_WR_I2C_DONE;
+					state <= S_WR_I2C_DONE;		//配置数据全部写完成后，将跳转到写完成状态
 				end
 			end
 			S_WR_I2C:
 			begin
-				if(i2c_write_req_ack)
+				if(i2c_write_req_ack)		//一次数据写完成后，写应答信号有效，进入写检查，进行下一次操作
 				begin
-					error <= err ? 1'b1 : error; 
-					lut_index <= lut_index + 8'd1;
-					i2c_write_req <= 1'b0;
-					state <= S_WR_I2C_CHECK;
+					error 			<= err ? 1'b1 : error; 
+					lut_index 		<= lut_index + 8'd1;
+					i2c_write_req 	<= 1'b0;
+					state 			<= S_WR_I2C_CHECK;
 				end
 			end
 			S_WR_I2C_DONE:
