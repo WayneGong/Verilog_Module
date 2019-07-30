@@ -231,7 +231,7 @@ module i2c_master_bit_ctrl (
     // generate bus status controller
 
     // capture SDA and SCL
-    // reduce metastability risk
+    // reduce metastability risk，捕获SDA，SCL信号，已减少亚稳态风险
     always @(posedge clk or negedge nReset)
       if (!nReset)
       begin
