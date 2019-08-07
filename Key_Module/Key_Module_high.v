@@ -1,13 +1,12 @@
 //---------------------------------------------------------------------------
 //--	文件名		:	key_in_Module.v
-//--	描述		:	按键消抖模块1
+//--	描述		:	按键消抖模块，按键按下时为高电平
 //---------------------------------------------------------------------------
-module key_Module
+module key_Module_High
 (
 	clk,
 	rst_n,
 	key_in,
-
 	key_out
 );  
  
@@ -27,7 +26,6 @@ reg		[19:0]	time_cnt;			//用来计数按键延迟的定时计数器
 reg		[ 7:0]	key_in_reg1;		//用来接收按键信号的寄存器
 reg		[ 7:0]	key_in_reg2;		//key_in_reg的下一个状态
 
-wire		[ 7:0]	key_in_out;		//消抖完成输出按键
 
 //设置定时器的时间为20ms
 parameter SET_TIME_20MS = 27'd1_000_000;	
@@ -63,7 +61,7 @@ begin
 end
 
 
-assign key_out = key_in_reg1 & (~key_in_reg2 );	//判断按键有没有按下
+assign key_out = key_in_reg2 & (~key_in_reg1 );	//判断按键有没有按下
 
 	 
 endmodule
