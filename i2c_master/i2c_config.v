@@ -38,16 +38,20 @@ module i2c_config(
 	input[7:0]         lut_reg_data,
 	output reg         error,
 	output             done,
+	output				scl_padoen_o,
+	output				sda_padoen_o,
+	
+	
 	inout              i2c_scl,
 	inout              i2c_sda
 );
 wire scl_pad_i;			//时钟输入信号线	
 wire scl_pad_o;			//时钟输出信号线
-wire scl_padoen_o;		//时钟信号输出使能（低有效）
+//wire scl_padoen_o;		//时钟信号输出使能（低有效）
 
 wire sda_pad_i;			//数据输入信号线	
 wire sda_pad_o;			//数据输出信号线
-wire sda_padoen_o;		//数据信号输出使能（低有效）
+//wire sda_padoen_o;		//数据信号输出使能（低有效）
 
 assign sda_pad_i = i2c_sda;								//数据输入信号线总是连接到数据引脚	
 assign i2c_sda = ~sda_padoen_o ? sda_pad_o : 1'bz;		//当输出使能有效时，把输出信号的值赋给引脚，否则当输出使能无效时，引脚保持高阻态，此时引脚有外部信号驱动

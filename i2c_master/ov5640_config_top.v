@@ -3,6 +3,9 @@ module ov5640_config_top
 	input                       clk,
 	input                       rst_n,
 
+	output						scl_padoen_o,
+	output						sda_padoen_o,
+	
 	inout                       cmos_scl,          //cmos i2c clock
 	inout                       cmos_sda          //cmos i2c data
 
@@ -25,6 +28,10 @@ i2c_config i2c_config_m0(
 	.lut_reg_data               (lut_data[7:0]            ),
 	.error                      (                         ),
 	.done                       (                         ),
+	.scl_padoen_o				(	scl_padoen_o						),
+	.sda_padoen_o				(	sda_padoen_o						),
+	
+	
 	.i2c_scl                    (cmos_scl                 ),
 	.i2c_sda                    (cmos_sda                 )
 );
