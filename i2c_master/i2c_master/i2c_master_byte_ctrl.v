@@ -73,8 +73,12 @@
 `include "i2c_master_defines.v"
 
 module i2c_master_byte_ctrl (
-	clk, rst, nReset, ena, clk_cnt, start, stop, read, write, ack_in, din,
-	cmd_ack, ack_out, dout, i2c_busy, i2c_al, scl_i, scl_o, scl_oen, sda_i, sda_o, sda_oen );
+	clk, rst, nReset, ena, clk_cnt, 
+	start, stop, read, write, ack_in, din,
+	cmd_ack, ack_out, dout, i2c_busy, i2c_al,	
+	scl_i, scl_o, scl_oen, 
+	sda_i, sda_o, sda_oen 
+);
 
 	//
 	// inputs & outputs
@@ -144,23 +148,23 @@ module i2c_master_byte_ctrl (
 
 	// hookup bit_controller
 	i2c_master_bit_ctrl bit_controller (
-		.clk     ( clk      ),		// system clock
-		.rst     ( rst      ),      // synchronous active high reset
-		.nReset  ( nReset   ),      // asynchronous active low reset
-		.ena     ( ena      ),      // core enable signal
-		.clk_cnt ( clk_cnt  ),      // clock prescale value//
-		.cmd     ( core_cmd ),      // command (from byte controller)
-		.cmd_ack ( core_ack ),      // command complete acknowledge
-		.busy    ( i2c_busy ),      // i2c bus busy
-		.al      ( i2c_al   ),      // i2c bus arbitration lost		仲裁失败
-		.din     ( core_txd ),      //发送的数据位
-		.dout    ( core_rxd ),      //接收的数据位
-		.scl_i   ( scl_i    ),      // i2c clock line input
-		.scl_o   ( scl_o    ),      // i2c clock line output
-		.scl_oen ( scl_oen  ),      // i2c clock line output enable (active low
-		.sda_i   ( sda_i    ),      // i2c data line input
-		.sda_o   ( sda_o    ),      // i2c data line output
-		.sda_oen ( sda_oen  )       // i2c data line output enable (active low)
+		.clk     (	clk     	),		// system clock
+		.rst     (	rst     	),      // synchronous active high reset
+		.nReset  (	nReset  	),      // asynchronous active low reset
+		.ena     (	ena     	),      // core enable signal
+		.clk_cnt (	clk_cnt 	),      // clock prescale value//
+		.cmd     (	core_cmd	),      // command (from byte controller)
+		.cmd_ack (	core_ack	),      // command complete acknowledge
+		.busy    (	i2c_busy	),      // i2c bus busy
+		.al      (	i2c_al  	),      // i2c bus arbitration lost		仲裁失败
+		.din     (	core_txd	),      //发送的数据位
+		.dout    (	core_rxd	),      //接收的数据位
+		.scl_i   (	scl_i   	),      // i2c clock line input
+		.scl_o   (	scl_o   	),      // i2c clock line output
+		.scl_oen (	scl_oen 	),      // i2c clock line output enable (active low
+		.sda_i   (	sda_i   	),      // i2c data line input
+		.sda_o   (	sda_o   	),      // i2c data line output
+		.sda_oen (	sda_oen 	)       // i2c data line output enable (active low)
 	);
 
 
@@ -276,7 +280,7 @@ module i2c_master_byte_ctrl (
 
 	        ST_WRITE:
 	          if (core_ack)			//应答信号有效
-	            if (cnt_done)			//计数完成
+	            if (cnt_done)			//计数完成，
 	              begin
 	                  c_state  <= #1 ST_ACK;
 	                  core_cmd <= #1 `I2C_CMD_READ;

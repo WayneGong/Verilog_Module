@@ -29,30 +29,30 @@
 
 module i2c_master_top
 (
-	input rst,
-	input clk,
-	input[15:0] clk_div_cnt,
+	input 				rst,
+	input 				clk,
+	input[15:0] 		clk_div_cnt,
 	
 	// I2C signals
 	// i2c clock line
-	input  scl_pad_i,                           // SCL-line input
-	output scl_pad_o,                           // SCL-line output (always 1'b0)
-	output scl_padoen_o,                        // SCL-line output enable (active low)
+	input  				scl_pad_i,					// SCL-line input
+	output				scl_pad_o,					// SCL-line output (always 1'b0)
+	output 				scl_padoen_o,				// SCL-line output enable (active low)
 	// i2c data line                            
-	input  sda_pad_i,                           // SDA-line input
-	output sda_pad_o,                           // SDA-line output (always 1'b0)
-	output sda_padoen_o,                        // SDA-line output enable (active low)
+	input  				sda_pad_i,					// SDA-line input
+	output 				sda_pad_o,					// SDA-line output (always 1'b0)
+	output 				sda_padoen_o,				// SDA-line output enable (active low)
 	
-	input i2c_addr_2byte,                       // Is the register address 16bit?
-	input i2c_read_req,                         // Read register request
-	output i2c_read_req_ack,                    // Read register request response
-	input i2c_write_req,                        // Write register request
-	output i2c_write_req_ack,                   // Write register request response
-	input[7:0] i2c_slave_dev_addr,              // I2c device address
-	input[15:0] i2c_slave_reg_addr,             // I2c register address
-	input[7:0] i2c_write_data,                  // I2c write register data
-	output reg[7:0] i2c_read_data,              // I2c read register data
-	output reg error                            // The error indication, generally there is no response
+	input 				i2c_addr_2byte,				// Is the register address 16bit?
+	input 				i2c_read_req,				// Read register request
+	output 				i2c_read_req_ack,			// Read register request response，标志一次读操作完成
+	input 				i2c_write_req,				// Write register request
+	output 				i2c_write_req_ack,			// Write register request response，标志一次写操作完成
+	input		[7:0]	i2c_slave_dev_addr,			// I2c device address
+	input		[15:0]	i2c_slave_reg_addr,			// I2c register address
+	input		[7:0]	i2c_write_data,				// I2c write register data
+	output	reg	[7:0]	i2c_read_data,				// I2c read register data
+	output	reg 		error						// The error indication, generally there is no response
 );
 //State machine definition
 localparam S_IDLE             =  0;             // Idle state, waiting for read and write
@@ -71,20 +71,21 @@ localparam S_WAIT             = 12;
 localparam S_WR_REG_ADDR1     = 13; 
 localparam S_RD_REG_ADDR1     = 14; 
 localparam S_RD_ACK           = 15; 
-reg start;
-reg stop;
-reg read;
-reg write;
-reg ack_in;
-reg[7:0] txr;
-wire[7:0] rxr;
-wire i2c_busy;
-wire i2c_al;
-wire done;
-wire irxack;
-reg[3:0] state, next_state;
-assign i2c_read_req_ack = (state == S_RD_ACK);
-assign i2c_write_req_ack = (state == S_WR_ACK);
+reg 			start;
+reg 			stop;
+reg 			read;
+reg 			write;
+reg 			ack_in;
+reg		[7:0]	txr;
+wire	[7:0]	rxr;
+wire 			i2c_busy;
+wire 			i2c_al;
+wire 			done;
+wire 			irxack;
+reg		[3:0] 	state, next_state;
+assign 			i2c_read_req_ack 	= (state == S_RD_ACK);
+assign 			i2c_write_req_ack 	= (state == S_WR_ACK);
+
 always@(posedge clk or posedge rst)
 begin
 	if(rst)
@@ -136,7 +137,7 @@ begin
 		S_WAIT:
 			next_state <= S_IDLE;
 		S_RD_DEV_ADDR0:			//读过程的器件地址
-			if(done && irxack)
+			if(done && irxack)			//irxack ：应答信号，如果应答信号为高，则表示写数据失败
 				next_state <= S_WR_ERR_NACK;
 			else if(done)
 				next_state <= S_RD_REG_ADDR;
@@ -286,7 +287,7 @@ i2c_master_byte_ctrl byte_controller (
 	.ack_in   ( ack_in       ),
 	.din      ( txr          ),
 	.cmd_ack  ( done         ),
-	.ack_out  ( irxack       ),
+	.ack_out  ( irxack       ),		//从设备应答信号
 	.dout     ( rxr          ),
 	.i2c_busy ( i2c_busy     ),
 	.i2c_al   ( i2c_al       ),

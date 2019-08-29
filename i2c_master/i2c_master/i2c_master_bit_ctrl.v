@@ -103,25 +103,25 @@
 // Translate simple commands into SCL/SDA transitions
 // Each command has 5 states, A/B/C/D/idle
 //
-// start:	SCL	~~~~~~~~~~\____
-//	SDA	~~~~~~~~\______
-//		 x | A | B | C | D | i
+// start:		SCL	~~~~~~~~~~\____
+//				SDA	~~~~~~~~\______
+//				x | A | B | C | D | i
 //
-// repstart	SCL	____/~~~~\___
-//	SDA	__/~~~\______
-//		 x | A | B | C | D | i
+// repstart		SCL	____/~~~~\___
+//				SDA	__/~~~\______
+//				 x | A | B | C | D | i
 //
-// stop	SCL	____/~~~~~~~~
-//	SDA	==\____/~~~~~
-//		 x | A | B | C | D | i
+// stop			SCL	____/~~~~~~~~
+//				SDA	==\____/~~~~~
+//			 	x | A | B | C | D | i
 //
-//- write	SCL	____/~~~~\____
-//	SDA	==X=========X=
-//		 x | A | B | C | D | i
+//- write		SCL	____/~~~~\____
+//				SDA	==X=========X=
+//		 		x | A | B | C | D | i
 //
-//- read	SCL	____/~~~~\____
-//	SDA	XXXX=====XXXX
-//		 x | A | B | C | D | i
+//- read		SCL	____/~~~~\____
+//				SDA	XXXX=====XXXX
+//		 		x | A | B | C | D | i
 //
 
 // Timing:     Normal mode      Fast mode
@@ -174,7 +174,8 @@ module i2c_master_bit_ctrl (
     reg        sSCL, sSDA;      // filtered and synchronized SCL and SDA inputs
     reg        dSCL, dSDA;      // delayed versions of sSCL and sSDA
     reg        dscl_oen;        // delayed scl_oen
-    reg        sda_chk;         // check SDA output (Multi-master arbitration)
+    
+	reg        sda_chk;         // check SDA output (Multi-master arbitration)
     reg        clk_en;          // clock generation signals
     reg        slave_wait;      // slave inserts wait states
     reg [15:0] cnt;             // clock divider counter (synthesis)
@@ -211,7 +212,7 @@ module i2c_master_bit_ctrl (
           cnt    <= #1 16'h0;
           clk_en <= #1 1'b1;
       end
-      else if (rst || ~|cnt || !ena || scl_sync)
+      else if (rst || ~|cnt || !ena || scl_sync)    //当 cnt = 000 ,  ~|cnt =1;
       begin
           cnt    <= #1 clk_cnt;
           clk_en <= #1 1'b1;
@@ -231,7 +232,7 @@ module i2c_master_bit_ctrl (
     // generate bus status controller
 
     // capture SDA and SCL
-    // reduce metastability risk，捕获SDA，SCL信号，已减少亚稳态风险
+    // reduce metastability risk，捕获SDA，SCL信号，以减少亚稳态风险
     always @(posedge clk or negedge nReset)
       if (!nReset)
       begin
@@ -269,7 +270,7 @@ module i2c_master_bit_ctrl (
           fSCL <= 3'b111;
           fSDA <= 3'b111;
       end
-      else if (~|filter_cnt)
+      else if (~|filter_cnt)   //when filter_cnt = 0000,  ~|filter_cnt = 1
       begin
           fSCL <= {fSCL[1:0],cSCL[1]};
           fSDA <= {fSDA[1:0],cSDA[1]};
@@ -509,7 +510,7 @@ module i2c_master_bit_ctrl (
                     begin
                         c_state <= #1 rd_c;
                         scl_oen <= #1 1'b1; // set SCL high
-                        sda_oen <= #1 1'b1; // keep SDA tri-stated
+                        sda_oen <= #1 1'b1; // keep SDA tri-stated,SDA输出高阻态，SDA的电平由外部的控制，此时可以通过SDA读取引脚的电平
                         sda_chk <= #1 1'b0; // don't check SDA output
                     end
 
@@ -570,6 +571,10 @@ module i2c_master_bit_ctrl (
 
 
     // assign scl and sda output (always gnd)
+	//模块内部时钟和数据信号总输出为0，当输出使能有效时，输出为0.
+	//同时，引脚外部有上拉电阻，输出使能无效时，端口信号被外部拉高。
+	//同时输出使能是低有效，故s**_oen = 0时，S** = 0;
+	//S** = 1时,S** 或被上拉电阻拉高，或也可以被从设备拉低，用于从设备发送响应信号或从从设备读取数据。
     assign scl_o = 1'b0;
     assign sda_o = 1'b0;
 
