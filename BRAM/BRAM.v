@@ -8,7 +8,6 @@ module BRAM
    (
    input wire          	 			clk, 
    input wire          	 			wr_en,
-   input wire						rd_en,
    input wire	[MEMWIDTH-1:0]		waddr,		//写地址
    input wire	[MEMWIDTH-1:0]		raddr,		//读地址
    input wire	[DATAWIDTH-1:0] 	data_in,	//写数据
@@ -27,12 +26,7 @@ always@(posedge clk)
 begin
 	if( wr_en )
 		memory[waddr]	<=	data_in;
-end   
-
-always@(posedge clk)
-begin
-	if( rd_en )
 	data_out	<=	memory[raddr];
-end
+end   
 
 endmodule
