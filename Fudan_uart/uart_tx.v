@@ -9,6 +9,7 @@ module uart_tx #(
     input 			wrreq,
     input [7:0] 	wdata,
     output reg 		tx,
+	output			tx_done,
     output reg 		rdy
 );
     
@@ -22,6 +23,8 @@ wire 	end_cnt_clk;
 wire 	end_cnt_bit;			
 assign 	end_cnt_clk 	= 	( cnt_clk	==	T - 1 );
 assign 	end_cnt_bit 	=	end_cnt_clk && cnt_bit == 10 - 1;
+
+assign	tx_done			=	end_cnt_bit;
 
 reg		[7:0] 	wdata_reg;
 
