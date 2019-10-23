@@ -2,7 +2,7 @@
 //--	文件名		:	key_in_Module.v
 //--	描述		:	按键消抖模块，按键按下时为低电平
 //---------------------------------------------------------------------------
-module key_Module_Low
+module Key_Module_long_push
 (
 	clk,
 	rst_n,
