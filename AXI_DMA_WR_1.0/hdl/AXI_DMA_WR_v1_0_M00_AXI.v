@@ -329,62 +329,94 @@ frame_buf_32x8192 frame_buf_inst (
   .rd_data_count(rd_data_count)  // output wire [11 : 0] rd_data_count
 );               
 
+//写fifo通道是慢时钟（pixel_clk），小位宽（32bit）,读fifo通道是快时钟（M_AXI_ACLK），大位宽（64bit）。
+//一次fifo中写入的数据大于预设值后，由于读通道的带宽大于写通道第二带宽，因此，fifo的一次写入所用的时间将大于一次读取的时间。
+//fifo中写入的数据大于预设值后，继续写入的数据速度小于读出的速度，故fifo中的有效数据数量将会减少。直到一次突发传输完成。
+//等待下一次写入的数据大于预设值后，进行下一次的突传输，将数据从fifo读出，写入到DDR SDRAM 中。
+
+// fifo 中写入的数据阈值标志位，当fifo中的数据大于预设值时 该信号为高
 always @(posedge M_AXI_ACLK )
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		w_axi_flag <= 1'b0;
 	else if(rd_data_count >=  DATA_LATCH)
 		w_axi_flag <= 1'b1;
 	else 
-		w_axi_flag <= 1'b0;              
+		w_axi_flag <= 1'b0;  
+end		
 
+// 一次突发传输的标志位 ，当 w_axi_flag 有效时，该信号有效，直到一次突发传输到最后一个数据（axi_wlast == 1'b1），该信号被置低
+// 直到下一次fifo中的数据再次大于预设值，再启动下一次突发传输
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		w_cycle_flag <= 1'b0;
 	else if(w_cycle_flag == 1'b0 && w_axi_flag == 1'b1)
 		w_cycle_flag <= 1'b1;
 	else if(w_cycle_flag == 1'b1 && axi_wlast == 1'b1)
 		w_cycle_flag <= 1'b0;
+end
 
+//当开始突发传输时，axi_awvalid（地址有效信号）被拉高，直到接收到 M_AXI_AWREADY 有效信号，axi_awvalid 信号才被置低
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		axi_awvalid<= 1'b0;
 	else if(w_cycle_flag == 1'b1 && M_AXI_AWREADY==1'b1)
 		axi_awvalid <= 1'b0;
 	else if(w_cycle_flag  == 1'b0 && w_axi_flag == 1'b1)
-		axi_awvalid <= 1'b1;     
+		axi_awvalid <= 1'b1;  
+end		
 
+//当开始突发传输时，axi_awvalid（地址有效信号）被拉高的同时，将突发首地址放置到axi_awaddr总线上，待 M_AXI_AWREADY 信号有效时，表示此次的地址信号被从机接收
+//将该地址信号置为下一次突发传输的首地址
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		axi_awaddr <='d0;
 	else if(axi_wvalid == 1'b1 && M_AXI_WREADY && axi_wlast == 1'b1 && axi_awaddr == ADDR_END)
 		axi_awaddr <='d0;
 	else if(axi_awvalid == 1'b1 && M_AXI_AWREADY == 1'b1)
-		axi_awaddr <= axi_awaddr + burst_size_bytes ;   
+		axi_awaddr <= axi_awaddr + burst_size_bytes ; 
+end		
 
+//突发传输被触发后，axi_wvalid（数据有效信号）被拉，表示总线上有有效的数据，直到传输到最后一个数据，该信号被拉。
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN  == 1'b0)
 		axi_wvalid <= 1'b0;
 	else if(w_cycle_flag  == 1'b0 && w_axi_flag == 1'b1)
 		axi_wvalid <= 1'b1;
 	else if(w_cycle_flag == 1'b1 && axi_wlast == 1'b1)
 		axi_wvalid <= 1'b0;
+end
 
+//统计一次突发传输中发送的数据的个数
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		wr_word_cnt <= 'd0;
 	else if(axi_wvalid == 1'b1 && M_AXI_WREADY == 1'b1)
 		wr_word_cnt <= wr_word_cnt + 1'b1;
 	else wr_word_cnt <='d0;
+end
 
+//生成一次突发传输的最后一个数据标志信号，该信号与一次突发传输的最后一个数据对齐。
 always @(posedge M_AXI_ACLK)
+begin
 	if(M_AXI_ARESETN == 1'b0)
 		axi_wlast <= 1'b0;
 	else if(wr_word_cnt == M_AXI_AWLEN-1)
 		axi_wlast <= 1'b1;
 	else
 		axi_wlast <= 1'b0;
+end
+
+//用于生成fifo的读使能信号。 axi_wvalid 为高时，表示主机在发送有效数据。 M_AXI_WREADY 为高时，表示从机已准备好接受数据。
 
 assign rd_fifo_en = axi_wvalid & M_AXI_WREADY;     
+
+//写响应的准备信号始终有效。
 
 assign axi_bready = 1'b1;                                                                     
 

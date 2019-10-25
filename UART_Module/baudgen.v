@@ -35,6 +35,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module BAUDGEN
+#(
+	parameter	SYS_CLK_FRP		=	50_000_000,
+	parameter	BAUDRATE		=	115200
+)
 (
   input wire clk,
   input wire resetn,
@@ -54,10 +58,10 @@ always @ (posedge clk, negedge resetn)
       count_reg <= count_next;
 end
 
+parameter	BAUD_CLK_CNT	=	SYS_CLK_FRP	/ (BAUDRATE * 16 );	
 
-//Baudrate  = 9600 = 50Mhz/(325*16)
-assign count_next = ((count_reg == 325) ? 0 : count_reg + 1'b1);
+assign count_next 	=	((count_reg	==	BAUD_CLK_CNT	) ? 0 : count_reg + 1'b1	);
 
-assign baudtick = ((count_reg == 325) ? 1'b1 : 1'b0);
+assign baudtick 	=	((count_reg	== 	BAUD_CLK_CNT	) ? 1'b1 : 1'b0				);
 
 endmodule
