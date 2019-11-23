@@ -2,24 +2,25 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 module BRAM 
-   #(	parameter 	MEMWIDTH 	= 10,		//1024 * data 
-		parameter	DATAWIDTH 	= 32
+   #(	
+		parameter 	MEMWIDTH 	= 20,		//1024 * data 
+		parameter	DATAWIDTH 	= 1
    )               
    (
    input wire          	 			clk, 
    input wire          	 			wr_en,
-   input wire	[MEMWIDTH-1:0]		waddr,		//Ð´µØÖ·
-   input wire	[MEMWIDTH-1:0]		raddr,		//¶ÁµØÖ·
-   input wire	[DATAWIDTH-1:0] 	data_in,	//Ð´Êý¾Ý
-   output reg	[DATAWIDTH-1:0] 	data_out	//¶ÁÊý¾Ý
+   input wire	[MEMWIDTH-1:0]		waddr,		//Ð´ï¿½ï¿½Ö·
+   input wire	[MEMWIDTH-1:0]		raddr,		//ï¿½ï¿½ï¿½Ö·
+   input wire	[DATAWIDTH-1:0] 	data_in,	//Ð´ï¿½ï¿½ï¿½ï¿½
+   output reg	[DATAWIDTH-1:0] 	data_out	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    );
 
 // Memory Array
-reg  [DATAWIDTH-1:0] memory[0:(2**(MEMWIDTH)-1)];
+reg  [DATAWIDTH-1:0] memory[0:(2**MEMWIDTH-1)];
 
 initial
 begin
-	$readmemh("initial_data.hex", memory);
+	$readmemh("sin_1024_14bit_signd.hex", memory);
 end      
 
 always@(posedge clk)

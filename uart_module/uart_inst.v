@@ -1,4 +1,3 @@
-
 uart_top 
 #(
 	.SYS_CLK_FRP	(	50_000_000	),

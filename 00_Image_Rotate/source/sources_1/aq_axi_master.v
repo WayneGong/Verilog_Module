@@ -45,10 +45,10 @@ module aq_axi_master(
   output [0:0]  M_AXI_AWID,
   output [31:0] M_AXI_AWADDR,
   output [7:0]  M_AXI_AWLEN,    // Burst Length: 0-255
-  output [2:0]  M_AXI_AWSIZE,   // Burst Size: Fixed 2'b011，一次传输8字节数据（即数据有效传输位宽为64bit）
-  output [1:0]  M_AXI_AWBURST,  // Burst Type: Fixed 2'b01(Incremental Burst，地址增量传输)
+  output [2:0]  M_AXI_AWSIZE,   // Burst Size: Fixed 2'b011
+  output [1:0]  M_AXI_AWBURST,  // Burst Type: Fixed 2'b01(Incremental Burst)
   output        M_AXI_AWLOCK,   // Lock: Fixed 2'b00
-  output [3:0]  M_AXI_AWCACHE,  // Cache: Fixed 2'b0011
+  output [3:0]  M_AXI_AWCACHE,  // Cache: Fiex 2'b0011
   output [2:0]  M_AXI_AWPROT,   // Protect: Fixed 2'b000
   output [3:0]  M_AXI_AWQOS,    // QoS: Fixed 2'b0000
   output [0:0]  M_AXI_AWUSER,   // User: Fixed 32'd0
@@ -58,7 +58,7 @@ module aq_axi_master(
   // Master Write Data
   output [63:0] M_AXI_WDATA,
   output [7:0]  M_AXI_WSTRB,
-  output        M_AXI_WLAST,  
+  output        M_AXI_WLAST,
   output [0:0]  M_AXI_WUSER,
   output        M_AXI_WVALID,
   input         M_AXI_WREADY,
@@ -96,15 +96,15 @@ module aq_axi_master(
   // Local Bus
   input         MASTER_RST,
   
-  input         WR_START,		//	写通道，开始传输信号
-  input [31:0]  WR_ADRS,		//	写通道，突发传输首地址
-  input [31:0]  WR_LEN, 		//	写通道，突发长度
-  output        WR_READY,		//	写通道，写控制空闲标志位。1：空闲态，0：非空闲态。
-  output        WR_FIFO_RE,		//	写通道，fifo读使能信号
-  input         WR_FIFO_EMPTY,	//	写通道，fifo空标志位
-  input         WR_FIFO_AEMPTY,	//	写通道，fifo几乎空标志位
-  input [63:0]  WR_FIFO_DATA,	//	写通道，来自fifo的数据，要写入ddr中。
-  output        WR_DONE,		//	写通道，一次突发写完成标志位。
+  input         WR_START,
+  input [31:0]  WR_ADRS,
+  input [31:0]  WR_LEN, 
+  output        WR_READY,
+  output        WR_FIFO_RE,
+  input         WR_FIFO_EMPTY,
+  input         WR_FIFO_AEMPTY,
+  input [63:0]  WR_FIFO_DATA,
+  output        WR_DONE,
 
   input         RD_START,
   input [31:0]  RD_ADRS,
@@ -119,13 +119,13 @@ module aq_axi_master(
   output [31:0] DEBUG
 );
 
-  localparam S_WR_IDLE  = 3'd0;		//写传输状态机，空闲态
-  localparam S_WA_WAIT  = 3'd1;		//写传输状态机，写地址等待
-  localparam S_WA_START = 3'd2;		//写传输状态机，写地址
-  localparam S_WD_WAIT  = 3'd3;		//写传输状态机，写数据等待，等待从机的ready信号有效
-  localparam S_WD_PROC  = 3'd4;		//写传输状态机，写数据突发过程，直到一次突发传输完成
-  localparam S_WR_WAIT  = 3'd5;		//写传输状态机，写响应等待
-  localparam S_WR_DONE  = 3'd6;		//写传输状态机，传输完成
+  localparam S_WR_IDLE  = 3'd0;
+  localparam S_WA_WAIT  = 3'd1;
+  localparam S_WA_START = 3'd2;
+  localparam S_WD_WAIT  = 3'd3;
+  localparam S_WD_PROC  = 3'd4;
+  localparam S_WR_WAIT  = 3'd5;
+  localparam S_WR_DONE  = 3'd6;
   
   reg [2:0]   wr_state;
   reg [31:0]  reg_wr_adrs;
@@ -136,16 +136,17 @@ module aq_axi_master(
   reg [1:0]   reg_wr_status;
   reg [3:0]   reg_w_count, reg_r_count;
 
-  reg [7:0]   	rd_chkdata, wr_chkdata;
-  reg [1:0]   	resp;
-  reg 			rd_first_data;
-  reg 			rd_fifo_enable;
-  reg[31:0] 	rd_fifo_cnt;
-  
+  reg [7:0]   rd_chkdata, wr_chkdata;
+  reg [1:0]   resp;
+  reg rd_first_data;
+  reg rd_fifo_enable;
+  reg[31:0] rd_fifo_cnt;
 assign WR_DONE = (wr_state == S_WR_DONE);
 
-assign WR_FIFO_RE		= rd_first_data | (reg_wvalid & ~WR_FIFO_EMPTY & M_AXI_WREADY & rd_fifo_enable);
-//assign WR_FIFO_RE		= reg_wvalid & ~WR_FIFO_EMPTY & M_AXI_WREADY;
+
+
+assign WR_FIFO_RE         = rd_first_data | (reg_wvalid & ~WR_FIFO_EMPTY & M_AXI_WREADY & rd_fifo_enable);
+//assign WR_FIFO_RE         = reg_wvalid & ~WR_FIFO_EMPTY & M_AXI_WREADY;
 always @(posedge ACLK or negedge ARESETN)
 begin
 	if(!ARESETN)
@@ -167,142 +168,110 @@ begin
 end
   // Write State
   always @(posedge ACLK or negedge ARESETN) begin
-    if(!ARESETN) 
-		begin
-			wr_state            	<= S_WR_IDLE;
-			reg_wr_adrs[31:0]   	<= 32'd0;
-			reg_wr_len[31:0]    	<= 32'd0;
-			reg_awvalid         	<= 1'b0;
-			reg_wvalid          	<= 1'b0;
-			reg_w_last          	<= 1'b0;
-			reg_w_len[7:0]      	<= 8'd0;
-			reg_w_stb[7:0]      	<= 8'd0;
-			reg_wr_status[1:0]  	<= 2'd0;
-			reg_w_count[3:0]    	<= 4'd0;
-			reg_r_count[3:0]    	<= 4'd0;
-			wr_chkdata          	<= 8'd0;
-			rd_chkdata 			<= 8'd0;
-			resp 					<= 2'd0;
-			rd_first_data 		<= 1'b0;
-		end 	
-	else begin
-	
-	if(MASTER_RST) begin
-			wr_state <= S_WR_IDLE;
-		end 
-	
-	else begin
-	case(wr_state)
-        
-		S_WR_IDLE: 
-		begin
-			if(WR_START) 
-				begin
-					wr_state          	<= S_WA_WAIT;
-					reg_wr_adrs[31:0] 	<= WR_ADRS[31:0];
-					reg_wr_len[31:0]  	<= WR_LEN[31:0] -32'd1;
-					rd_first_data 		<= 1'b1;
-				end
-				reg_awvalid         <= 1'b0;
-				reg_wvalid          <= 1'b0;
-				reg_w_last          <= 1'b0;
-				reg_w_len[7:0]      <= 8'd0;
-				reg_w_stb[7:0]      <= 8'd0;
-				reg_wr_status[1:0]  <= 2'd0;
+    if(!ARESETN) begin
+      wr_state            <= S_WR_IDLE;
+      reg_wr_adrs[31:0]   <= 32'd0;
+      reg_wr_len[31:0]    <= 32'd0;
+      reg_awvalid         <= 1'b0;
+      reg_wvalid          <= 1'b0;
+      reg_w_last          <= 1'b0;
+      reg_w_len[7:0]      <= 8'd0;
+      reg_w_stb[7:0]      <= 8'd0;
+      reg_wr_status[1:0]  <= 2'd0;
+      reg_w_count[3:0]    <= 4'd0;
+      reg_r_count[3:0]  <= 4'd0;
+      wr_chkdata          <= 8'd0;
+      rd_chkdata <= 8'd0;
+      resp <= 2'd0;
+	  rd_first_data <= 1'b0;
+  end else begin
+    if(MASTER_RST) begin
+      wr_state <= S_WR_IDLE;
+    end else begin
+      case(wr_state)
+        S_WR_IDLE: begin
+          if(WR_START) begin
+            wr_state          <= S_WA_WAIT;
+            reg_wr_adrs[31:0] <= WR_ADRS[31:0];
+            reg_wr_len[31:0]  <= WR_LEN[31:0] -32'd1;
+			rd_first_data <= 1'b1;
+          end
+          reg_awvalid         <= 1'b0;
+          reg_wvalid          <= 1'b0;
+          reg_w_last          <= 1'b0;
+          reg_w_len[7:0]      <= 8'd0;
+          reg_w_stb[7:0]      <= 8'd0;
+          reg_wr_status[1:0]  <= 2'd0;
         end
-		
-        S_WA_WAIT: 
-		begin
-			if(!WR_FIFO_AEMPTY | (reg_wr_len[31:11] == 21'd0)) 		
-				begin
-					wr_state		<= S_WA_START;
-				end
-					rd_first_data 	<= 1'b0;
-        end  
-		
-        S_WA_START: 
-		begin
-			wr_state				<= S_WD_WAIT;
-			reg_awvalid         	<= 1'b1;
-			reg_wr_len[31:11]    	<= reg_wr_len[31:11] - 21'd1;
-          
-		if(reg_wr_len[31:11] != 21'd0) 
-			begin
-				reg_w_len[7:0]  	<= 8'hFF;
-				reg_w_last      	<= 1'b0;
-				reg_w_stb[7:0]  	<= 8'hFF;
-			end 
-		else 
-			begin
-				reg_w_len[7:0]  <= reg_wr_len[10:3];
-				reg_w_last      <= 1'b1;
-				reg_w_stb[7:0]  <= 8'hFF;
-	/*
-				case(reg_wr_len[2:0]) begin
-				  case 3'd0: reg_w_stb[7:0]  <= 8'b0000_0000;
-				  case 3'd1: reg_w_stb[7:0]  <= 8'b0000_0001;
-				  case 3'd2: reg_w_stb[7:0]  <= 8'b0000_0011;
-				  case 3'd3: reg_w_stb[7:0]  <= 8'b0000_0111;
-				  case 3'd4: reg_w_stb[7:0]  <= 8'b0000_1111;
-				  case 3'd5: reg_w_stb[7:0]  <= 8'b0001_1111;
-				  case 3'd6: reg_w_stb[7:0]  <= 8'b0011_1111;
-				  case 3'd7: reg_w_stb[7:0]  <= 8'b0111_1111;
-				  default:   reg_w_stb[7:0]  <= 8'b1111_1111;
-				endcase
-	*/
-			  end
+        S_WA_WAIT: begin
+          if(!WR_FIFO_AEMPTY | (reg_wr_len[31:11] == 21'd0)) begin
+            wr_state          <= S_WA_START;
+          end
+		  rd_first_data <= 1'b0;
         end
-		
-        S_WD_WAIT: 
-		begin
-			if(M_AXI_AWREADY) 
-				begin
-					wr_state        <= S_WD_PROC;
-					reg_awvalid     <= 1'b0;
-					reg_wvalid      <= 1'b1;
-				end
-		end
-        S_WD_PROC: 
-		begin
-			if(M_AXI_WREADY & ~WR_FIFO_EMPTY) 
-				begin
-					if(reg_w_len[7:0] == 8'd0) 
-						begin
-							wr_state        <= S_WR_WAIT;
-							reg_wvalid      <= 1'b0;
-							reg_w_stb[7:0]  <= 8'h00;
-						end 
-					else 
-						begin
-							reg_w_len[7:0]  <= reg_w_len[7:0] -8'd1;
-						end
-				end
-		end
-        S_WR_WAIT: 
-		begin
-			if(M_AXI_BVALID) 
-				begin
-					reg_wr_status[1:0]  <= reg_wr_status[1:0] | M_AXI_BRESP[1:0];
-					if(reg_w_last) 
-						begin
-							wr_state	<= S_WR_DONE;
-						end 
-					else 
-						begin
-							wr_state          <= S_WA_WAIT;
-							reg_wr_adrs[31:0] <= reg_wr_adrs[31:0] + 32'd2048;
-						end
-				  end
-		end
-        S_WR_DONE: 
-			begin
-				wr_state <= S_WR_IDLE;
-			end
+        S_WA_START: begin
+          wr_state            <= S_WD_WAIT;
+          reg_awvalid         <= 1'b1;
+          reg_wr_len[31:11]    <= reg_wr_len[31:11] - 21'd1;
+          if(reg_wr_len[31:11] != 21'd0) begin
+            reg_w_len[7:0]  <= 8'hFF;
+            reg_w_last      <= 1'b0;
+            reg_w_stb[7:0]  <= 8'hFF;
+          end else begin
+            reg_w_len[7:0]  <= reg_wr_len[10:3];
+            reg_w_last      <= 1'b1;
+            reg_w_stb[7:0]  <= 8'hFF;
+/*
+            case(reg_wr_len[2:0]) begin
+              case 3'd0: reg_w_stb[7:0]  <= 8'b0000_0000;
+              case 3'd1: reg_w_stb[7:0]  <= 8'b0000_0001;
+              case 3'd2: reg_w_stb[7:0]  <= 8'b0000_0011;
+              case 3'd3: reg_w_stb[7:0]  <= 8'b0000_0111;
+              case 3'd4: reg_w_stb[7:0]  <= 8'b0000_1111;
+              case 3'd5: reg_w_stb[7:0]  <= 8'b0001_1111;
+              case 3'd6: reg_w_stb[7:0]  <= 8'b0011_1111;
+              case 3'd7: reg_w_stb[7:0]  <= 8'b0111_1111;
+              default:   reg_w_stb[7:0]  <= 8'b1111_1111;
+            endcase
+*/
+          end
+        end
+        S_WD_WAIT: begin
+          if(M_AXI_AWREADY) begin
+            wr_state        <= S_WD_PROC;
+            reg_awvalid     <= 1'b0;
+            reg_wvalid      <= 1'b1;
+          end
+        end
+        S_WD_PROC: begin
+          if(M_AXI_WREADY & ~WR_FIFO_EMPTY) begin
+            if(reg_w_len[7:0] == 8'd0) begin
+              wr_state        <= S_WR_WAIT;
+              reg_wvalid      <= 1'b0;
+              reg_w_stb[7:0]  <= 8'h00;
+            end else begin
+              reg_w_len[7:0]  <= reg_w_len[7:0] -8'd1;
+            end
+          end
+        end
+        S_WR_WAIT: begin
+          if(M_AXI_BVALID) begin
+            reg_wr_status[1:0]  <= reg_wr_status[1:0] | M_AXI_BRESP[1:0];
+            if(reg_w_last) begin
+              wr_state          <= S_WR_DONE;
+            end else begin
+              wr_state          <= S_WA_WAIT;
+              reg_wr_adrs[31:0] <= reg_wr_adrs[31:0] + 32'd2048;
+            end
+          end
+        end
+        S_WR_DONE: begin
+            wr_state <= S_WR_IDLE;
+          end
         
-        default: 
-			begin
-				wr_state <= S_WR_IDLE;
-			end
+        default: begin
+          wr_state <= S_WR_IDLE;
+        end
       endcase
 /*
       if(WR_FIFO_RE) begin
@@ -325,9 +294,9 @@ end
         resp <= M_AXI_BRESP;
       end
 */
-		end
-	end
-end
+      end
+    end
+  end
    
   assign M_AXI_AWID         = 1'b0;
   assign M_AXI_AWADDR[31:0] = reg_wr_adrs[31:0];

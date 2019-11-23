@@ -31,11 +31,11 @@
 	)
 	(
 		// Users to add ports here
-		output	wire		tout,
-		input	wire		pixel_clk,
-		input	wire		r_fifo_en,
+		output	wire			tout,
+		input	wire			pixel_clk,
+		input	wire			r_fifo_en,
 		output	wire	[31:0]	r_fifo_data,
-		output	reg		vga_start,	
+		output	reg				vga_start,	
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -302,82 +302,114 @@
 	assign init_txn_pulse	= (!init_txn_ff2) && init_txn_ff;
 
 
-	//Generate a pulse to initiate AXI transaction.
-	always @(posedge M_AXI_ACLK)										      
-	  begin                                                                        
-	    // Initiates AXI transaction delay    
-	    if (M_AXI_ARESETN == 0 )                                                   
-	      begin                                                                    
-	        init_txn_ff <= 1'b0;                                                   
-	        init_txn_ff2 <= 1'b0;                                                   
-	      end                                                                               
-	    else                                                                       
-	      begin  
-	        init_txn_ff <= INIT_AXI_TXN;
-	        init_txn_ff2 <= init_txn_ff;                                                                 
-	      end                                                                      
-	  end     
-	//Axi read channel
-	always @(posedge M_AXI_ACLK)
-		if(M_AXI_ARESETN == 0)
-			read_cycle_flag <= 1'b0;
-		else if(init_txn_pulse == 1'b1)
-			read_cycle_flag <= 1'b1;
-		//else if(read_cycle_flag == 1'b1 && axi_araddr == READ_END_ADDR && M_AXI_RLAST == 1'b1)
-			//read_cycle_flag <= 1'b0;
-	
-	always @(posedge M_AXI_ACLK )
-		if(M_AXI_ARESETN == 0)
-			read_cmd_flag <= 1'b0;
-		else if(read_cycle_flag == 1'b1 && M_AXI_ARREADY == 1'b1 && axi_arvalid ==1'b1)
-			read_cmd_flag <= 1'b0;
-		else if(read_cycle_flag == 1'b1 && read_data_flag == 1'b0)
-			read_cmd_flag <= 1'b1;
-	
-	always @(posedge M_AXI_ACLK)
-		if(M_AXI_ARESETN == 1'b0)
-			axi_arvalid <= 1'b0;
-		else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1)
-			axi_arvalid <= 1'b0;
-		else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b0 && wr_data_count<'d2047)
-			axi_arvalid <= 1'b1;
-	
-	always @(posedge M_AXI_ACLK)
-		if(M_AXI_ARESETN == 1'b0)
-			read_data_flag <= 1'b0;
-		else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1)
-			read_data_flag <= 1'b1;
-		else if(read_data_flag == 1'b1 && axi_rready == 1'b1 && M_AXI_RVALID == 1'b1 && M_AXI_RLAST == 1'b1)
-			read_data_flag <= 1'b0;
-	
-	always @(posedge M_AXI_ACLK)
-		if(M_AXI_ARESETN == 1'b0)
-			axi_rready <= 1'b0;
-		else if(read_data_flag == 1'b1 && axi_rready == 1'b0)
-			axi_rready <= 1'b1;
-		else if(read_data_flag == 1'b0)
-			axi_rready <= 1'b0;
-			
-	assign tout = |M_AXI_RDATA;
-	
-	always @(posedge M_AXI_ACLK )
-		if(M_AXI_ARESETN == 1'b0)
-			axi_araddr <='d0;
-		else if(read_cycle_flag == 1'b1 && axi_araddr == READ_END_ADDR && M_AXI_RLAST == 1'b1)//read_cycle_flag == 1'b0)
-			axi_araddr <= 'd0;
-		else if(axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1 && read_cmd_flag == 1'b1)
-			axi_araddr <= axi_araddr + burst_size_bytes;
-	
-	always @(posedge pixel_clk)
-		if(M_AXI_ARESETN == 1'b0)
-			vga_start <= 1'b0;
-		else if(rd_data_count >'d2047)
-			vga_start <= 1'b1;
+//Generate a pulse to initiate AXI transaction.
+always @(posedge M_AXI_ACLK)										      
+begin                                                                        
+    // Initiates AXI transaction delay    
+	if (M_AXI_ARESETN == 0 )                                                   
+		begin                                                                    
+			init_txn_ff 	<= 	1'b0;                                                   
+			init_txn_ff2 	<= 	1'b0;                                                   
+		end                                                                               
+	else                                                                       
+		begin  
+			init_txn_ff 	<= 	INIT_AXI_TXN;
+			init_txn_ff2 	<= 	init_txn_ff;                                                                 
+		end                                                                      
+end 
+   
+//INIT_AXI_TXN 信号的上升沿触发突发传输
+// read_cycle_flag 信号用于标记有效的传输周期
+   
+//Axi read channel
+always @(posedge M_AXI_ACLK)
+begin
+	if(M_AXI_ARESETN == 0)
+		read_cycle_flag <= 1'b0;
+	else if(init_txn_pulse == 1'b1)
+		read_cycle_flag <= 1'b1;
+	//else if(read_cycle_flag == 1'b1 && axi_araddr == READ_END_ADDR && M_AXI_RLAST == 1'b1)
+		//read_cycle_flag <= 1'b0;
+end
 
-assign fifo_w_en = axi_rready&M_AXI_RVALID;
-assign fifo_w_data=M_AXI_RDATA;
-                                                                                         
-frame_fifo_64x4096 frame_fifo (
+
+//读指令标志位，用于标志可以发送读地址的时间，为高时才可发送地址信息。在读地址被从机接收后置低，非读数据期间为高。
+always @(posedge M_AXI_ACLK )
+begin
+	if(M_AXI_ARESETN == 0)
+		read_cmd_flag <= 1'b0;
+	else if(read_cycle_flag == 1'b1 && M_AXI_ARREADY == 1'b1 && axi_arvalid ==1'b1)
+		read_cmd_flag <= 1'b0;
+	else if(read_cycle_flag == 1'b1 && read_data_flag == 1'b0)
+		read_cmd_flag <= 1'b1;
+end
+
+// axi_arvalid （读地址有效信号）。每当fifo中储存的数据小于预设值时，进行一次突发传输，读取ddr中的数据储存到fifo中。
+always @(posedge M_AXI_ACLK)
+begin
+	if(M_AXI_ARESETN == 1'b0)
+		axi_arvalid <= 1'b0;
+	else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1)
+		axi_arvalid <= 1'b0;
+	else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b0 && wr_data_count<'d2047)
+		axi_arvalid <= 1'b1;
+end
+
+
+//当 M_AXI_ARREADY信号有效后，表示从机已经接收到了突发读地址信号，此时将 read_data_flag（读数据标志位）置高，直到读取到突发传输的最后一个数据（M_AXI_RLAST == 1'b1）
+always @(posedge M_AXI_ACLK)
+begin
+	if(M_AXI_ARESETN == 1'b0)
+		read_data_flag <= 1'b0;
+	else if(read_cmd_flag == 1'b1 && axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1)
+		read_data_flag <= 1'b1;
+	else if(read_data_flag == 1'b1 && axi_rready == 1'b1 && M_AXI_RVALID == 1'b1 && M_AXI_RLAST == 1'b1)
+		read_data_flag <= 1'b0;
+end
+
+//读标志位有效后，将 axi_rready（读数据准备信号） 置高，表示主机已经准备好接受读取的数据
+always @(posedge M_AXI_ACLK)
+begin
+	if(M_AXI_ARESETN == 1'b0)
+		axi_rready <= 1'b0;
+	else if(read_data_flag == 1'b1 && axi_rready == 1'b0)
+		axi_rready <= 1'b1;
+	else if(read_data_flag == 1'b0)
+		axi_rready <= 1'b0;
+end
+		
+assign tout = |M_AXI_RDATA;
+
+//当 M_AXI_ARREADY信号有效后，表示从机已经接收到了此次突发读地址信号，此时将地址置为下一次突发的首地址
+always @(posedge M_AXI_ACLK )
+begin
+	if(M_AXI_ARESETN == 1'b0)
+		axi_araddr <='d0;
+	else if(read_cycle_flag == 1'b1 && axi_araddr == READ_END_ADDR && M_AXI_RLAST == 1'b1)//read_cycle_flag == 1'b0)
+		axi_araddr <= 'd0;
+	else if(axi_arvalid == 1'b1 && M_AXI_ARREADY == 1'b1 && read_cmd_flag == 1'b1)
+		axi_araddr <= axi_araddr + burst_size_bytes;
+end
+
+//当fifo中的数据大于预设值后，才启动显示模块进行读取。
+always @(posedge pixel_clk)
+begin
+	if(M_AXI_ARESETN == 1'b0)
+		vga_start <= 1'b0;
+	else if(rd_data_count >'d2047)
+		vga_start <= 1'b1;
+end
+
+//当 axi_rready  和 M_AXI_RVALID 同时有效时， AXI读数据端口输出有效的数据，此时将该数据写入到缓存fifo中。
+
+assign fifo_w_en 	= 	axi_rready&M_AXI_RVALID;
+assign fifo_w_data	=	M_AXI_RDATA;
+ 
+ 
+//从DDR中读取出的图像数据暂时缓存到fifo中，供显示模块读取。
+ 
+frame_fifo_64x4096 frame_fifo 
+(
   .wr_clk(M_AXI_ACLK),                // input wire wr_clk
   .rd_clk(pixel_clk),                // input wire rd_clk
   .din(fifo_w_data),                      // input wire [63 : 0] din

@@ -380,14 +380,14 @@ begin
 		axi_awaddr <= axi_awaddr + burst_size_bytes ; 
 end		
 
-//突发传输被触发后，axi_wvalid（数据有效信号）被拉，表示总线上有有效的数据，直到传输到最后一个数据，该信号被拉。
+//突发传输被触发后，axi_wvalid（数据有效信号）被拉，表示总线上有有效的数据，直到传输到最后一个数据，该信号被拉低。
 always @(posedge M_AXI_ACLK)
 begin
 	if(M_AXI_ARESETN  == 1'b0)
 		axi_wvalid <= 1'b0;
 	else if(w_cycle_flag  == 1'b0 && w_axi_flag == 1'b1)
 		axi_wvalid <= 1'b1;
-	else if(w_cycle_flag == 1'b1 && axi_wlast == 1'b1)
+	else if(w_cycle_flag == 1'b1 && ( wr_word_cnt == M_AXI_AWLEN-1 ) )
 		axi_wvalid <= 1'b0;
 end
 
@@ -398,7 +398,8 @@ begin
 		wr_word_cnt <= 'd0;
 	else if(axi_wvalid == 1'b1 && M_AXI_WREADY == 1'b1)
 		wr_word_cnt <= wr_word_cnt + 1'b1;
-	else wr_word_cnt <='d0;
+	else 
+		wr_word_cnt <='d0;
 end
 
 //生成一次突发传输的最后一个数据标志信号，该信号与一次突发传输的最后一个数据对齐。
