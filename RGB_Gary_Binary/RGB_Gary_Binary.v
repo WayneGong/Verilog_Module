@@ -1,3 +1,5 @@
+//
+
 module  RGB_Gary_Binary
 (
 	input                   rst_n,   
