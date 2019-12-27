@@ -96,25 +96,25 @@ module aq_axi_master(
   // Local Bus
   input         MASTER_RST,
   
-  input         WR_START,		//	写通道，开始传输信号
-  input [31:0]  WR_ADRS,		//	写通道，突发传输首地址
-  input [31:0]  WR_LEN, 		//	写通道，突发长度
-  output        WR_READY,		//	写通道，写控制空闲标志位。1：空闲态，0：非空闲态。
-  output        WR_FIFO_RE,		//	写通道，fifo读使能信号
-  input         WR_FIFO_EMPTY,	//	写通道，fifo空标志位
-  input         WR_FIFO_AEMPTY,	//	写通道，fifo几乎空标志位
-  input [63:0]  WR_FIFO_DATA,	//	写通道，来自fifo的数据，要写入ddr中。
-  output        WR_DONE,		//	写通道，一次突发写完成标志位。
+  input         WR_START,		//	写数据控制，开始传输信号，启动一次写传输
+  input [31:0]  WR_ADRS,		//	写数据控制，突发传输首地址
+  input [31:0]  WR_LEN, 		//	写数据控制，突发长度
+  output        WR_READY,		//	写数据控制，写控制空闲标志位。1：空闲态，0：非空闲态。
+  output        WR_FIFO_RE,		//	写数据控制，fifo读使能信号
+  input         WR_FIFO_EMPTY,	//	写数据控制，fifo空标志位
+  input         WR_FIFO_AEMPTY,	//	写数据控制，fifo几乎空标志位
+  input [63:0]  WR_FIFO_DATA,	//	写数据控制，来自fifo的数据，要写入ddr中。
+  output        WR_DONE,		//	写数据控制，一次突发写完成标志位。
 
-  input         RD_START,
-  input [31:0]  RD_ADRS,
-  input [31:0]  RD_LEN, 
-  output        RD_READY,
-  output        RD_FIFO_WE,
-  input         RD_FIFO_FULL,
-  input         RD_FIFO_AFULL,
-  output [63:0] RD_FIFO_DATA,
-  output        RD_DONE,
+  input         RD_START,		//	读数据控制，开始传输信号，启动一次读传输
+  input [31:0]  RD_ADRS,        //	读数据控制，突发传输首地址
+  input [31:0]  RD_LEN,         //	读数据控制，突发长度
+  output        RD_READY,       //	读数据控制，写控制空闲标志位。1：空闲态，0：非空闲态。
+  output        RD_FIFO_WE,     //	读数据控制，fifo写使能信号，标志着读出的数据有效
+  input         RD_FIFO_FULL,   //	读数据控制，fifo空标志位
+  input         RD_FIFO_AFULL,  //	读数据控制，fifo几乎空标志位
+  output [63:0] RD_FIFO_DATA,   //	读数据控制，从ddr中读出的数据。
+  output        RD_DONE,        //	读数据控制，一次突发写完成标志位。
 
   output [31:0] DEBUG
 );
@@ -226,31 +226,31 @@ end
 			reg_awvalid         	<= 1'b1;
 			reg_wr_len[31:11]    	<= reg_wr_len[31:11] - 21'd1;
           
-		if(reg_wr_len[31:11] != 21'd0) 
-			begin
-				reg_w_len[7:0]  	<= 8'hFF;
-				reg_w_last      	<= 1'b0;
-				reg_w_stb[7:0]  	<= 8'hFF;
-			end 
-		else 
-			begin
-				reg_w_len[7:0]  <= reg_wr_len[10:3];
-				reg_w_last      <= 1'b1;
-				reg_w_stb[7:0]  <= 8'hFF;
-	/*
-				case(reg_wr_len[2:0]) begin
-				  case 3'd0: reg_w_stb[7:0]  <= 8'b0000_0000;
-				  case 3'd1: reg_w_stb[7:0]  <= 8'b0000_0001;
-				  case 3'd2: reg_w_stb[7:0]  <= 8'b0000_0011;
-				  case 3'd3: reg_w_stb[7:0]  <= 8'b0000_0111;
-				  case 3'd4: reg_w_stb[7:0]  <= 8'b0000_1111;
-				  case 3'd5: reg_w_stb[7:0]  <= 8'b0001_1111;
-				  case 3'd6: reg_w_stb[7:0]  <= 8'b0011_1111;
-				  case 3'd7: reg_w_stb[7:0]  <= 8'b0111_1111;
-				  default:   reg_w_stb[7:0]  <= 8'b1111_1111;
-				endcase
-	*/
-			  end
+			if(reg_wr_len[31:11] != 21'd0) 
+				begin
+					reg_w_len[7:0]  	<= 8'hFF;
+					reg_w_last      	<= 1'b0;
+					reg_w_stb[7:0]  	<= 8'hFF;
+				end 
+			else 
+				begin
+					reg_w_len[7:0]  <= reg_wr_len[10:3];
+					reg_w_last      <= 1'b1;
+					reg_w_stb[7:0]  <= 8'hFF;
+		/*
+					case(reg_wr_len[2:0]) begin
+					  case 3'd0: reg_w_stb[7:0]  <= 8'b0000_0000;
+					  case 3'd1: reg_w_stb[7:0]  <= 8'b0000_0001;
+					  case 3'd2: reg_w_stb[7:0]  <= 8'b0000_0011;
+					  case 3'd3: reg_w_stb[7:0]  <= 8'b0000_0111;
+					  case 3'd4: reg_w_stb[7:0]  <= 8'b0000_1111;
+					  case 3'd5: reg_w_stb[7:0]  <= 8'b0001_1111;
+					  case 3'd6: reg_w_stb[7:0]  <= 8'b0011_1111;
+					  case 3'd7: reg_w_stb[7:0]  <= 8'b0111_1111;
+					  default:   reg_w_stb[7:0]  <= 8'b1111_1111;
+					endcase
+		*/
+				end
         end
 		
         S_WD_WAIT: 

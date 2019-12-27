@@ -8,11 +8,11 @@ module BRAM
    )               
    (
    input wire          	 			clk, 
-   input wire          	 			wr_en,
-   input wire	[MEMWIDTH-1:0]		waddr,		//д��ַ
-   input wire	[MEMWIDTH-1:0]		raddr,		//���ַ
-   input wire	[DATAWIDTH-1:0] 	data_in,	//д����
-   output reg	[DATAWIDTH-1:0] 	data_out	//������
+   input wire          	 			wr_en,		//写有效信号
+   input wire	[MEMWIDTH-1:0]		waddr,		//写地址
+   input wire	[MEMWIDTH-1:0]		raddr,		//读地址
+   input wire	[DATAWIDTH-1:0] 	data_in,	//写入的数据
+   output reg	[DATAWIDTH-1:0] 	data_out	//读出的数据
    );
 
 // Memory Array

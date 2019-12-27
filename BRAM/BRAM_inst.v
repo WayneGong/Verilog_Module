@@ -18,12 +18,12 @@
 
 BRAM BRAM_inst
 (
-	.clk(clk_sig) ,	// input  clk_sig
-	.wr_en(wr_en_sig) ,	// input  wr_en_sig
-	.waddr(waddr_sig) ,	// input [MEMWIDTH-1:0] waddr_sig
-	.raddr(raddr_sig) ,	// input [MEMWIDTH-1:0] raddr_sig
-	.data_in(data_in_sig) ,	// input [DATAWIDTH-1:0] data_in_sig
-	.data_out(data_out_sig) 	// output [DATAWIDTH-1:0] data_out_sig
+	.clk		(	clk			) ,	// input  clk
+	.wr_en		(	wr_en		) ,	// input  wr_en
+	.waddr		(	waddr		) ,	// input [MEMWIDTH-1:0] waddr
+	.raddr		(	raddr		) ,	// input [MEMWIDTH-1:0] raddr
+	.data_in	(	data_in		) ,	// input [DATAWIDTH-1:0] data_in
+	.data_out	(	data_out	) 	// output [DATAWIDTH-1:0] data_out
 );
 
 defparam BRAM_inst.MEMWIDTH = 10;
