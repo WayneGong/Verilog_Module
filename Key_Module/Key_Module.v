@@ -11,7 +11,7 @@ module key_Module
 	rst_n,
 	key_in,
 
-	key_out
+	key_value
 );  
  
 //---------------------------------------------------------------------------
@@ -20,7 +20,7 @@ module key_Module
 input					clk;				//时钟的端口,开发板用的50MHz晶振
 input					rst_n;				//复位的端口,低电平复位
 input		[ KEY_NUM-1:0]		key_in;		//对应开发板上的key_in
-output		[ KEY_NUM-1:0]		key_out;				
+output		[ KEY_NUM-1:0]		key_value;				
 
 //---------------------------------------------------------------------------
 //--	内部端口声明
@@ -93,7 +93,7 @@ end
 
 assign	key_one_out = key_in_reg1 & (~key_in_reg2 )	;
 
-assign	key_out	=	( press_time_cnt <= SET_TIME_1S )	?	key_one_out	: key_long_out;
+assign	key_value	=	( press_time_cnt <= SET_TIME_1S )	?	key_one_out	: key_long_out;
 
 endmodule
 
